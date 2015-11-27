@@ -3,8 +3,8 @@
 #include <inttypes.h>
 #include <round.h>
 #include <stdio.h>
-#include "devices/pit.h"
 #include "threads/interrupt.h"
+#include "threads/io.h"
 #include "threads/synch.h"
 #include "threads/thread.h"
   
@@ -30,12 +30,20 @@ static void busy_wait (int64_t loops);
 static void real_time_sleep (int64_t num, int32_t denom);
 static void real_time_delay (int64_t num, int32_t denom);
 
-/* Sets up the timer to interrupt TIMER_FREQ times per second,
-   and registers the corresponding interrupt. */
+/* Sets up the 8254 Programmable Interval Timer (PIT) to
+   interrupt PIT_FREQ times per second, and registers the
+   corresponding interrupt. */
 void
 timer_init (void) 
 {
-  pit_configure_channel (0, 2, TIMER_FREQ);
+  /* 8254 input frequency divided by TIMER_FREQ, rounded to
+     nearest. */
+  uint16_t count = (1193180 + TIMER_FREQ / 2) / TIMER_FREQ;
+
+  outb (0x43, 0x34);    /* CW: counter 0, LSB then MSB, mode 2, binary. */
+  outb (0x40, count & 0xff);
+  outb (0x40, count >> 8);
+
   intr_register_ext (0x20, timer_interrupt, "8254 Timer");
 }
 
@@ -73,6 +81,7 @@ timer_ticks (void)
   enum intr_level old_level = intr_disable ();
   int64_t t = ticks;
   intr_set_level (old_level);
+  barrier ();
   return t;
 }
 
@@ -92,9 +101,9 @@ timer_sleep (int64_t ticks)
   int64_t start = timer_ticks ();
 
   ASSERT (intr_get_level () == INTR_ON);
-  while (timer_elapsed (start) < ticks) 
-    thread_yield ();
+  thread_sleep (start + ticks);
 }
+
 
 /* Sleeps for approximately MS milliseconds.  Interrupts must be
    turned on. */
