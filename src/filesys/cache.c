@@ -33,8 +33,13 @@ int get_cache_entry(block_sector_t disk_sector)
 int get_free_entry(void)
 {
   int i;
-  for(i = 0; i < CACHE_MAX_SIZE; i ++)
-    if(cache_array[i].is_free == true) return i;
+  for(i = 0; i < CACHE_MAX_SIZE; i ++) {
+    if(cache_array[i].is_free == true)
+    {
+      cache_array[i].is_free = false;
+      return i;
+    }
+  }
 
   return -1;
 }
