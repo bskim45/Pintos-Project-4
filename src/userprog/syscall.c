@@ -172,7 +172,7 @@ static bool
 sys_create (void *file_, unsigned initial_size, struct intr_frame *f)
 {
   bool success;
-  success = filesys_create ((char*)file_, initial_size);
+  success = filesys_create ((char*)file_, initial_size, false);
   f->eax = (uint32_t) success;
   return success;
 }
