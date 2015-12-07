@@ -3,6 +3,7 @@
 #include "threads/malloc.h"
 #include "threads/thread.h"
 #include "threads/synch.h"
+#include <stdio.h>
 
 void init_entry(int idx)
 {
@@ -16,7 +17,7 @@ void init_cache(void)
 {
   int i;
   lock_init(&cache_lock);
-  for(i = 0; i < CACHE_MAX_SIZE; i ++)
+  for(i = 0; i < CACHE_MAX_SIZE; i++)
     init_entry(i);
 }
 
