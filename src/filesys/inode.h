@@ -20,4 +20,12 @@ void inode_deny_write (struct inode *);
 void inode_allow_write (struct inode *);
 off_t inode_length (const struct inode *);
 
+// ADDED
+bool inode_is_dir (const struct inode *);
+int inode_get_open_cnt (const struct inode *);
+block_sector_t inode_get_parent (const struct inode *);
+bool inode_set_parent (block_sector_t parent, block_sector_t child);
+void inode_lock (const struct inode *inode);
+void inode_unlock (const struct inode *inode);
+
 #endif /* filesys/inode.h */

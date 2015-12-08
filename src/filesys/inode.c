@@ -69,7 +69,7 @@ struct inode
 
 //ADDED
 bool inode_alloc (struct inode_disk *inode_disk);
-off_t inode_grow(struct inode* inode, off_t length);
+off_t inode_grow (struct inode* inode, off_t length);
 void inode_free (struct inode *inode);
 
 /* Returns the block device sector that contains byte offset POS
@@ -372,9 +372,13 @@ inode_write_at (struct inode *inode, const void *buffer_, off_t size,
   //ADDED
   if(offset + size > inode_length(inode))
   {
-    lock_acquire(&inode->lock);
+    if(!inode->is_dir)
+      lock_acquire(&inode->lock);
+
     inode->length = inode_grow(inode, offset + size);
-    lock_release(&inode->lock);
+
+    if(!inode->is_dir)
+      lock_release(&inode->lock);
   }
 
 
@@ -657,4 +661,45 @@ inode_free (struct inode *inode)
     // free first level block itself
     free_map_release(inode->blocks[INODE_PTRS - 1], 1);
   }
+}
+
+bool
+inode_is_dir (const struct inode *inode)
+{
+  return inode->is_dir;
+}
+
+int
+inode_get_open_cnt (const struct inode *inode)
+{
+  return inode->open_cnt;
+}
+
+block_sector_t
+inode_get_parent (const struct inode *inode)
+{
+  return inode->parent;
+}
+
+bool
+inode_set_parent (block_sector_t parent, block_sector_t child)
+{
+  struct inode* inode = inode_open(child);
+
+  if (!inode)
+    return false;
+
+  inode->parent = parent;
+  inode_close(inode);
+  return true;
+}
+
+void inode_lock (const struct inode *inode)
+{
+  lock_acquire(&((struct inode *)inode)->lock);
+}
+
+void inode_unlock (const struct inode *inode)
+{
+  lock_release(&((struct inode *) inode)->lock);
 }
