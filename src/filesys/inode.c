@@ -58,6 +58,7 @@ struct inode
     // struct inode_disk data;             /* Inode content. */
 
     off_t length;                       /* File size in bytes. */
+    off_t read_length;
     uint32_t direct_index;
     uint32_t indirect_index;
     uint32_t double_indirect_index;
@@ -208,6 +209,7 @@ inode_open (block_sector_t sector)
   // copy disk data to inode
   block_read(fs_device, inode->sector, &inode_disk);
   inode->length = inode_disk.length;
+  inode->read_length = inode_disk.length;
   inode->direct_index = inode_disk.direct_index;
   inode->indirect_index = inode_disk.indirect_index;
   inode->double_indirect_index = inode_disk.double_indirect_index;
@@ -269,7 +271,8 @@ inode_close (struct inode *inode)
           inode_disk.double_indirect_index = inode->double_indirect_index;
           inode_disk.is_dir = inode->is_dir;
           inode_disk.parent = inode->parent;
-          memcpy(&inode_disk.blocks, &inode->blocks, INODE_PTRS * sizeof(block_sector_t));
+          memcpy(&inode_disk.blocks, &inode->blocks,
+            INODE_PTRS * sizeof(block_sector_t));
           block_write(fs_device, inode->sector, &inode_disk);
         }
 
@@ -296,7 +299,7 @@ inode_read_at (struct inode *inode, void *buffer_, off_t size, off_t offset)
   off_t bytes_read = 0;
   // uint8_t *bounce = NULL;
 
-  off_t length = inode_length(inode);
+  off_t length = inode->read_length;
 
   if(offset >= length)
     return 0;
@@ -438,7 +441,7 @@ inode_write_at (struct inode *inode, const void *buffer_, off_t size,
       bytes_written += chunk_size;
     }
   // free (bounce);
-
+  inode->read_length = inode_length(inode);
   return bytes_written;
 }
 
