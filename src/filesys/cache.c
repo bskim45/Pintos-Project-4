@@ -3,7 +3,6 @@
 #include "threads/malloc.h"
 #include "threads/thread.h"
 #include "threads/synch.h"
-#include <stdio.h>
 
 void init_entry(int idx)
 {
@@ -19,13 +18,22 @@ void init_cache(void)
   lock_init(&cache_lock);
   for(i = 0; i < CACHE_MAX_SIZE; i++)
     init_entry(i);
+
+  thread_create("cache_writeback", 0, func_periodic_writer, NULL);
 }
 
 int get_cache_entry(block_sector_t disk_sector)
 {
   int i;
-  for(i = 0; i < CACHE_MAX_SIZE; i ++)
-    if(cache_array[i].disk_sector == disk_sector) return i;
+  for(i = 0; i < CACHE_MAX_SIZE; i++) {
+    if(cache_array[i].disk_sector == disk_sector)
+    {
+      if(!cache_array[i].is_free)
+      {
+        return i;
+      }
+    }
+  }
     
   return -1;
 }
@@ -33,7 +41,8 @@ int get_cache_entry(block_sector_t disk_sector)
 int get_free_entry(void)
 {
   int i;
-  for(i = 0; i < CACHE_MAX_SIZE; i ++) {
+  for(i = 0; i < CACHE_MAX_SIZE; i++)
+  {
     if(cache_array[i].is_free == true)
     {
       cache_array[i].is_free = false;
@@ -49,7 +58,8 @@ int access_cache_entry(block_sector_t disk_sector, bool dirty)
   lock_acquire(&cache_lock);
   
   int idx = get_cache_entry(disk_sector);
-  if(idx == -1) idx = replace_cache_entry(disk_sector, dirty);
+  if(idx == -1)
+    idx = replace_cache_entry(disk_sector, dirty);
   else
   {
     cache_array[idx].open_cnt++;
@@ -63,43 +73,43 @@ int access_cache_entry(block_sector_t disk_sector, bool dirty)
 
 int replace_cache_entry(block_sector_t disk_sector, bool dirty)
 {
-    int idx = get_free_entry();
-    int i = 0;
-    if(idx == -1) //cache is full
+  int idx = get_free_entry();
+  int i = 0;
+  if(idx == -1) //cache is full
+  {
+    for(i = 0; ; i = (i + 1) % CACHE_MAX_SIZE)
     {
-        while(true)
-        {
-            //cache is in use
-            if(cache_array[i].open_cnt > 0)
-                continue;
+          //cache is in use
+      if(cache_array[i].open_cnt > 0)
+        continue;
 
-            //second chance
-            if(cache_array[idx].accessed == true)
-                cache_array[idx].accessed = false;
+          //second chance
+      if(cache_array[i].accessed == true)
+        cache_array[i].accessed = false;
 
-            //evict it
-            else
-            {
-                //write back
-                if(cache_array[idx].dirty == true)
-                    block_write(fs_device, cache_array[idx].disk_sector, &cache_array[idx].block);
-               
-                init_entry(i);
-                idx = i;
-                break;
-            }
-            i = (i + 1) / CACHE_MAX_SIZE;
-        }
+      //evict it
+      else
+      {
+        //write back
+        if(cache_array[i].dirty == true)
+          block_write(fs_device, cache_array[i].disk_sector,
+            &cache_array[i].block);
+
+        init_entry(i);
+        idx = i;
+        break;
+      }
     }
+  }
 
-    cache_array[idx].disk_sector = disk_sector;
-    cache_array[idx].is_free = false;
-    cache_array[idx].open_cnt++;
-    cache_array[idx].accessed = true;
-    cache_array[idx].dirty = dirty;
-    block_read(fs_device, cache_array[idx].disk_sector, &cache_array[idx].block);
+  cache_array[idx].disk_sector = disk_sector;
+  cache_array[idx].is_free = false;
+  cache_array[idx].open_cnt++;
+  cache_array[idx].accessed = true;
+  cache_array[idx].dirty = dirty;
+  block_read(fs_device, cache_array[idx].disk_sector, &cache_array[idx].block);
 
-    return idx;
+  return idx;
 }
 
 void func_periodic_writer(void *aux UNUSED)
