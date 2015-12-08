@@ -231,8 +231,8 @@ inode_read_at (struct inode *inode, void *buffer_, off_t size, off_t offset)
         break;
 
       // ADDED
-      int cache_idx = access_cache_entry(sector_idx, false);
-      memcpy(buffer + bytes_read, (uint8_t *)cache_array[cache_idx].block + sector_ofs,
+      int cache_idx = access_cache_entry(sector_idx, false);      
+      memcpy(buffer + bytes_read, (uint8_t *) &cache_array[cache_idx].block + sector_ofs,
        chunk_size);
       cache_array[cache_idx].accessed = true;
       cache_array[cache_idx].open_cnt--;
@@ -281,7 +281,7 @@ inode_write_at (struct inode *inode, const void *buffer_, off_t size,
 
       // ADDED
       int cache_idx = access_cache_entry(sector_idx, true);
-      memcpy((uint8_t *)cache_array[cache_idx].block + sector_ofs,
+      memcpy((uint8_t *)&cache_array[cache_idx].block + sector_ofs,
         buffer + bytes_written, chunk_size);
       cache_array[cache_idx].accessed = true;
       cache_array[cache_idx].dirty = true;
