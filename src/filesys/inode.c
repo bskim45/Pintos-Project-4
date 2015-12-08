@@ -373,8 +373,10 @@ inode_write_at (struct inode *inode, const void *buffer_, off_t size,
     return 0;
 
   //ADDED
+  /* beyond EOF, need extend */
   if(offset + size > inode_length(inode))
   {
+    // no sync required for dirs
     if(!inode->is_dir)
       lock_acquire(&inode->lock);
 
