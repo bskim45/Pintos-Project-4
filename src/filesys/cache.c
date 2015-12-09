@@ -92,8 +92,10 @@ int replace_cache_entry(block_sector_t disk_sector, bool dirty)
       {
         //write back
         if(cache_array[i].dirty == true)
+        {
           block_write(fs_device, cache_array[i].disk_sector,
             &cache_array[i].block);
+        }
 
         init_entry(i);
         idx = i;

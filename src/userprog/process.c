@@ -112,7 +112,7 @@ start_process (void *file_name_)
     for (i = args_num-1; i >= 0; i--){
       push_arg_addr (&if_.esp, &arg_addr[i]);
       if (i == 0)
-	argv_addr = if_.esp;
+	    argv_addr = if_.esp;
     }
     push_arg_addr (&if_.esp, &argv_addr);
     push_arg_addr (&if_.esp, &args_num);
@@ -120,7 +120,11 @@ start_process (void *file_name_)
 //    hex_dump (0xc0000000-0x40, 0xc0000000-0x40, 0x40, true);
     palloc_free_page (file_name);
   }
- 
+
+  // ADDED
+  if (!thread_current()->dir)
+    thread_current()->dir = dir_open_root();
+
   /* Start the user process by simulating a return from an
      interrupt, implemented by intr_exit (in
      threads/intr-stubs.S).  Because intr_exit takes all of its

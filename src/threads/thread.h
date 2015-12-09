@@ -1,4 +1,4 @@
-#ifndef THREADS_THREAD_H
+﻿#ifndef THREADS_THREAD_H
 #define THREADS_THREAD_H
 
 #include <debug.h>
@@ -124,9 +124,11 @@ struct thread
     struct semaphore kill_this;
 
     char process_name[16];
-    struct file *fd_list[FD_MAX];
+    struct dir *fd_list[FD_MAX];
     int fd_num; 
     struct file *open_file;
+
+    struct dir *dir;
   };
 
 /* If false (default), use round-robin scheduler.

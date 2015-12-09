@@ -1,4 +1,4 @@
-#include "threads/thread.h"
+﻿#include "threads/thread.h"
 #include <debug.h>
 #include <stddef.h>
 #include <random.h>
@@ -14,6 +14,7 @@
 #include "devices/timer.h"
 #include "lib/kernel/list.h"
 #include "filesys/file.h"
+#include "filesys/directory.h"
 #ifdef USERPROG
 #include "userprog/process.h"
 #endif
@@ -285,6 +286,13 @@ thread_create (const char *name, int priority,
   sf->ebp = 0;
 
   intr_set_level (old_level);
+
+  //ADDED
+  // inherit parent working dir
+  if(thread_current()->dir) 
+    t->dir = dir_reopen(thread_current()->dir);
+  else
+    t->dir = NULL;
 
   /* Add to run queue. */
   thread_unblock (t);
@@ -630,6 +638,10 @@ init_thread (struct thread *t, const char *name, int priority)
   t->exit_code = 0;
   t->end = false;
   t->success_to_load = false;
+
+  //ADDED
+  t->dir = NULL;
+
   sema_init (&t->wait_this, 0); /* For Project #2 */
   sema_init (&t->kill_this, 0);
   sema_init (&t->wait_start_process, 0);
