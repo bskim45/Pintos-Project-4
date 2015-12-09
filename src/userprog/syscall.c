@@ -265,7 +265,7 @@ static tid_t
 sys_exec(void *cmd_line, struct intr_frame *f)
 {
   int tid;
-  tid=process_execute((char*)cmd_line);
+  tid = process_execute((char*)cmd_line);
   f->eax = tid;
   return tid;
 }
@@ -326,13 +326,19 @@ sys_filesize (int fd, struct intr_frame *f)
   ASSERT (fd >= 0 && fd < FD_MAX);
   if (t->fd_list[fd] == NULL){
     f->eax = 0;
-    return 0;
   }
-  else{
+
+  // ADDED: cannot filesize to dir
+  else if (inode_is_dir(file_get_inode(t->fd_list[fd])))
+    f->eax = -1;
+
+  else
+  {
     size = file_length (t->fd_list[fd]);
     f->eax = size;
-    return size;
   }
+
+  return f->eax;
 }
 
 static void
