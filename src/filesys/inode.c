@@ -311,7 +311,7 @@ inode_read_at (struct inode *inode, void *buffer_, off_t size, off_t offset)
       int sector_ofs = offset % BLOCK_SECTOR_SIZE;
 
       /* Bytes left in inode, bytes left in sector, lesser of the two. */
-      off_t inode_left = inode_length (inode) - offset;
+      off_t inode_left = length - offset;
       int sector_left = BLOCK_SECTOR_SIZE - sector_ofs;
       int min_left = inode_left < sector_left ? inode_left : sector_left;
 
@@ -321,7 +321,7 @@ inode_read_at (struct inode *inode, void *buffer_, off_t size, off_t offset)
         break;
 
       // ADDED
-      int cache_idx = access_cache_entry(sector_idx, true);
+      int cache_idx = access_cache_entry(sector_idx, false);
       memcpy(buffer + bytes_read, cache_array[cache_idx].block + sector_ofs,
        chunk_size);
       cache_array[cache_idx].accessed = true;
