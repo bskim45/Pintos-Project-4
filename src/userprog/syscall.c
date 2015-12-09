@@ -341,8 +341,11 @@ sys_seek (int fd, unsigned position, struct intr_frame *f UNUSED)
   struct thread *t = thread_current();
   
   ASSERT (fd >= 0 && fd < FD_MAX);
-  if (t->fd_list[fd] != NULL)
-    file_seek (t->fd_list[fd], position);
+  if (t->fd_list[fd] != NULL) {
+    // ADDED: cannot seek to dir
+    if (!inode_is_dir(file_get_inode(t->fd_list[fd])))
+      file_seek (t->fd_list[fd], position);
+  }
 }
 
 static unsigned
@@ -352,15 +355,20 @@ sys_tell (int fd, struct intr_frame *f)
   unsigned position;
   
   ASSERT (fd >= 0 && fd < FD_MAX);
-  if (t->fd_list[fd] == NULL){
+  if (t->fd_list[fd] == NULL)
     f->eax = 0;
-    return 0;
-  }
-  else{
+
+  // ADDED: cannot tell to dir
+  else if (inode_is_dir(file_get_inode(t->fd_list[fd])))
+    f->eax = -1;
+
+  else
+  {
     position = file_tell (t->fd_list[fd]);
     f->eax = position;
-    return position;
   }
+
+  return f->eax;
 }
 
 static void
@@ -371,19 +379,17 @@ sys_close (int fd, struct intr_frame *f UNUSED)
   ASSERT (fd >= 0 && fd < FD_MAX);
   if (t->fd_list[fd] != NULL)
   {
+    // ADDED
     struct inode* inode = file_get_inode(t->fd_list[fd]);
 
     if(inode == NULL)
       return;
 
     if(inode_is_dir(inode))
-    {
       dir_close(t->fd_list[fd]);
-    }
     else
-    {
       file_close (t->fd_list[fd]);
-    }
+
     t->fd_list[fd] = NULL;
   }
 }
@@ -401,13 +407,18 @@ sys_write (int fd, void *buffer_, unsigned size, struct intr_frame *f)
   }
   else{
     struct thread *t = thread_current();
-    if (t->fd_list[fd] == NULL){
+
+    if (t->fd_list[fd] == NULL)
       f->eax = -1;
-    }
-    else{
+
+    // ADDED: cannot write to dir
+    else if (inode_is_dir(file_get_inode(t->fd_list[fd])))
+      f->eax = -1;
+
+    else
       f->eax = file_write (t->fd_list[fd], buffer_, size); 
-    }
   }
+
   return f->eax;
 }
 
@@ -422,12 +433,19 @@ sys_read (int fd, void *buffer_, unsigned size, struct intr_frame *f)
     for (i=0; i<size; i++)
       buffer[i] = input_getc();
   }
-  else{
+  else
+  {
     struct thread *t = thread_current();
     if (t->fd_list[fd] == NULL)
       f->eax = -1;
+
+    // ADDED: cannot read to dir
+    else if (inode_is_dir(file_get_inode(t->fd_list[fd])))
+      f->eax = -1;
+
     else
       f->eax = file_read (t->fd_list[fd], buffer, size);
   }
+
   return f->eax;
 }
