@@ -28,7 +28,7 @@ int get_free_entry(void);
 int access_cache_entry(block_sector_t disk_sector, bool dirty);
 int replace_cache_entry(block_sector_t disk_sector, bool dirty);
 void func_periodic_writer(void *aux);
-void write_back(void);
+void write_back(bool clear);
 void func_read_ahead(void *aux);
 void ahead_reader(block_sector_t);
 

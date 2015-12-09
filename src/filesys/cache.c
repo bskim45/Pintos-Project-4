@@ -117,11 +117,11 @@ void func_periodic_writer(void *aux UNUSED)
     while(true)
     {
         timer_sleep(4 * TIMER_FREQ);
-        write_back();
+        write_back(false);
     }
 }
 
-void write_back(void)
+void write_back(bool clear)
 {
     int i;
     lock_acquire(&cache_lock);
@@ -132,6 +132,11 @@ void write_back(void)
         {
             block_write(fs_device, cache_array[i].disk_sector, &cache_array[i].block);
             cache_array[i].dirty = false;
+        }
+
+        // clear cache line (filesys done)
+        if(clear) {
+          init_entry(i);
         }
     }
 
