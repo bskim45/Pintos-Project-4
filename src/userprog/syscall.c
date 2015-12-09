@@ -37,6 +37,8 @@ bool sys_readdir(int fd, char *path, struct intr_frame *f);
 bool sys_isdir(int fd, struct intr_frame *f);
 int sys_inumber(int fd, struct intr_frame *f);
 
+static int get_free_fd (struct thread *t);
+
 void
 syscall_init (void) 
 {
@@ -228,7 +230,7 @@ sys_exit (int status)
   t->exit_code = status;
   t->end = true;
 
-  for (fd=0; fd < t->fd_num; fd++){ // close all open fd
+  for (fd=0; fd < FD_MAX; fd++){ // close all open fd
     if (t->fd_list[fd] != NULL)
     {
       struct inode* inode = file_get_inode(t->fd_list[fd]);
@@ -241,7 +243,7 @@ sys_exit (int status)
       else
         file_close (t->fd_list[fd]);
 
-      t->fd_list[fd] = 0;
+      t->fd_list[fd] = NULL;
     }
   }
 
@@ -311,8 +313,10 @@ sys_open (void *file_, struct intr_frame *f)
       f->eax = -1;
       return -1;
     }
+    int new_fd = get_free_fd(t);
+    t->fd_num = new_fd;
     f->eax = t->fd_num;
-    (t->fd_list)[(t->fd_num)++] = file;
+    t->fd_list[new_fd] = file;
     return f->eax;
   }
 }
@@ -454,4 +458,18 @@ sys_read (int fd, void *buffer_, unsigned size, struct intr_frame *f)
   }
 
   return f->eax;
+}
+
+
+static int
+get_free_fd (struct thread *t)
+{
+  int i;
+  for(i = 2; i < FD_MAX; i++)
+  {
+    if(t->fd_list[i] == NULL)
+      return i;
+  }
+
+  return -1;
 }
