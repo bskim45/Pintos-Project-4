@@ -1,4 +1,4 @@
-PintOS Project 4: File System
+Pintos Project 4: File System
 ==================
 
 ## Disclaimer
@@ -18,6 +18,6 @@ The MIT License (MIT)
 
 Copyright (c) 2015 Bumsoo Kim (http://bsk.im)
 
-see [LICENSE](https://github.com/bskim45/PintOS-Project-4/blob/master/LICENSE) for details.
+see [LICENSE](https://github.com/bskim45/Pintos-Project-4/blob/master/LICENSE) for details.
 
-Original source code of Pintos follows MIT License. See [here](https://github.com/bskim45/PintOS-Project-4/blob/master/LICENSE_PINTOS) or [license section](https://web.stanford.edu/class/cs140/projects/pintos/pintos_14.html) of official Pintos documentation for more details.
+Original source code of Pintos follows MIT License. See [here](https://github.com/bskim45/Pintos-Project-4/blob/master/src/LICENSE) or [license section](https://web.stanford.edu/class/cs140/projects/pintos/pintos_14.html) of official Pintos documentation for more details.
